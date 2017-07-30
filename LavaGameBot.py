@@ -13,7 +13,15 @@ bot = telebot.TeleBot(tb_token)
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    bot.send_message(message.chat.id, 'Привет, для создания комнаты введи \\host, для присоединения к комнате введи \\join')
+    bot.send_message(message.chat.id, 'Привет, для создания комнаты введи /host, для присоединения к комнате введи /join')
+
+@bot.message_handler(commands=['host'])
+def handle_start(message):
+    bot.send_message(message.chat.id, 'Команда для создания комнаты')
+
+@bot.message_handler(commands=['join'])
+def handle_start(message):
+    bot.send_message(message.chat.id, 'Команда для присоединения к комнате')
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
