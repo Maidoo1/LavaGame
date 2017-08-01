@@ -12,17 +12,16 @@ class LavaGame:
         self.host_id = host_id
         self.channel_id = channel_id
         self.started = False
+        self.repeat = 1
         self.safe_time = 3
         self.max_time = 30
         self._lava_timer = 0
         self._wave_timer = 0
         self._random_num = 0
 
-    def set_time(self, max_time):
-        self.max_time = max_time
-
-    def set_safe_time(self, safe_time):
-        self.safe_time = safe_time
+    def start_game(self):
+        for i in range(self.repeat):
+            self.wave_timer()
 
     def lava_coming(self):
         bot.send_message(self.host_id, 'Hide! Lava is coming after:')
@@ -44,20 +43,15 @@ class LavaGame:
                 self._wave_timer.join()
         else:
             return self.lava_coming()
-    # def start(self, id):
-    #     self.started = True
-    #     bot.send_message(id, 'Игра началась!')
-    #
-    #     for sec in range(1, self.max_time):
-    #         rand = randint(1, self.max_time)
-    #         if rand == sec:
-    #             return lava_coming(id)
-
-channels_dict = {} # Словарь, в котором ключ - id хоста, а значение - объект канала
 
 
-def isHost(id, room=channels_dict):
-    return True if str(id) in channels_dict.keys() else False
+
+
+games = {} # Словарь, в котором ключ - id хоста, а значение - объект канала
+
+
+def isHost(id, room=games):
+    return True if str(id) in games.keys() else False
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -69,10 +63,10 @@ def handle_start(message):
 @bot.message_handler(commands=['host'])
 def handle_start(message):
     channel_id = str(message.text).split()[-1]
-    channels_dict[str(message.chat.id)] = LavaGame(message.chat.id, channel_id)
+    games[str(message.chat.id)] = LavaGame(message.chat.id, channel_id)
     bot.send_message(message.chat.id,\
-                     'Вы создали комнату с id {}'.format(channel_id))
-    print(channels_dict)
+                     'Game has been created with id: {}'.format(channel_id))
+    print(games)
 
 
 # @bot.message_handler(commands=['join'])
@@ -85,19 +79,41 @@ def handle_start(message):
 def handle_start(message):
     max_time = str(message.text).split()[-1]
     if isHost(message.chat.id):
-        bot.send_message(message.chat.id, channels_dict[str(message.chat.id)].set_time(int(max_time)))
+        games[str(message.chat.id)].max_time = int(max_time)
+        bot.send_message(message.chat.id, 'Maximum wave time is {} now'.format(max_time))
     else:
         bot.send_message(message.chat.id,\
-                         'Только создатель комнаты имеет право устанавливать время!')
+                         'Only host can set time!')
+
+
+@bot.message_handler(commands=['safe'])
+def handle_start(message):
+    safe_time = str(message.text).split()[-1]
+    if isHost(message.chat.id):
+        games[str(message.chat.id)].safe_time = int(safe_time)
+        bot.send_message(message.chat.id, 'Safe time is {} now'.format(safe_time))
+    else:
+        bot.send_message(message.chat.id,\
+                         'Only host can set safe time!')
+
+
+@bot.message_handler(commands=['repeat'])
+def handle_start(message):
+    iter = str(message.text).split()[-1]
+    if isHost(message.chat.id):
+        games[str(message.chat.id)].repeat = int(iter)
+        bot.send_message(message.chat.id, 'Game will be repeated {} times'.format(iter))
+    else:
+        bot.send_message(message.chat.id, 'Only host can stop the game!')
 
 
 @bot.message_handler(commands=['play'])
 def handle_start(message):
     if isHost(message.chat.id):
-        channels_dict[str(message.chat.id)].wave_timer()
+        games[str(message.chat.id)].start_game()
     else:
         bot.send_message(message.chat.id,\
-                         'Только создатель комнаты имеет право начинать игру!')
+                         'Only host can start the game!')
 
 
 if __name__ == '__main__':
