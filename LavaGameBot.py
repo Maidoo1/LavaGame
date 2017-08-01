@@ -2,7 +2,6 @@ import telebot
 import threading
 from random import randint
 
-
 tb_token = '407083820:AAFB66RmIckJ1H46Uz_rmvR55pbVRPy5f_I'
 
 bot = telebot.TeleBot(tb_token)
@@ -14,6 +13,7 @@ class LavaGame:
         self.started = False
         self.safe_time = 3
         self.max_time = 30
+        self._lava_timer = 0
 
     def set_time(self, max_time):
         self.max_time = max_time
@@ -22,9 +22,14 @@ class LavaGame:
         self.safe_time = safe_time
 
     def lava_coming(self, id):
-        for i in range(self.safe_time, 0, 1):
-            bot.send_message(id, str(i))
-        bot.send_message(id, 'The floor is lava!')
+        bot.send_message(id, 'Hide! Lava is coming after:')
+        for i in range(self.safe_time, 0, -1):
+            self._lava_timer = threading.Timer(1, bot.send_message(id, str(i)))
+            self._lava_timer.start()
+            self._lava_timer.join()
+        else:
+            bot.send_message(id, 'The floor is lava!')
+
 
     # def start(self, id):
     #     self.started = True
