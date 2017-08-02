@@ -2,6 +2,20 @@ import telebot
 import threading
 from random import randint
 
+fire = u'\U0001F525'
+hourglass = u'\U0000231B'
+watch = u'\U0000231A'
+recycling = u'\U0000267B'
+smile = u'\U0001F47B'
+point = u'\U0000261D'
+sos = u'\U0001F198'
+new = u'\U0001F195'
+exclamation = u'\U00002757'
+double_exclamation = u'\U0000203C'
+check = u'\U00002714'
+arrow = u'\U000027A1'
+heart = u'\U00002764'
+
 tb_token = '407083820:AAFB66RmIckJ1H46Uz_rmvR55pbVRPy5f_I'
 
 bot = telebot.TeleBot(tb_token)
@@ -13,6 +27,7 @@ class LavaGame:
         self.player_id = player_id
         self.channel_id = channel_id
         self.repeat = 1
+        self.max_burn_time = 3
         self.max_safe_time = 3
         self.max_wave_time = 30
         self._lava_timer = 0
@@ -28,14 +43,26 @@ class LavaGame:
         [bot.send_message(player, message) for player in self.players]
 
     def wave_time(self, w_time):
+        if w_time > 300:
+            w_time = 300
         self.max_wave_time = w_time
         self.send_messages('Maximum wave time is {} now'.format(self.max_wave_time))
 
     def safe_time(self, s_time):
+        if s_time > 10:
+            s_time = 10
         self.max_safe_time = s_time
         self.send_messages('Safe time is {} now'.format(self.max_safe_time))
 
+    def burn_time(self, b_time):
+        if b_time > 10:
+            b_time = 10
+        self.max_burn_time = b_time
+        self.send_messages('Burning time is {} now'.format(self.max_burn_time))
+
     def repeats(self, repeat):
+        if repeat > 10:
+            repeat = 10
         self.repeat = repeat
         self.send_messages('Game will be repeated {} times'.format(self.repeat))
 
@@ -48,17 +75,17 @@ class LavaGame:
         pass
 
     def lava_coming(self):
-        self.send_messages('Hide! Lava is coming after:')
+        self.send_messages('Hide' + exclamation + '\nLava is coming after:')
 
         for sec in range(self.max_safe_time, 0, -1):
             self._lava_timer = threading.Timer(1, self.send_messages(str(sec)))
             self._lava_timer.start()
             self._lava_timer.join()
 
-        self.send_messages('The floor is lava!')
+        self.send_messages('The floor is lava' + double_exclamation)
 
-        for sec in range(1, 4, 1):
-            self._lava_timer = threading.Timer(1, self.empty_func())
+        for sec in range(0, self.max_burn_time, 1):
+            self._lava_timer = threading.Timer(1, self.send_messages(fire * 11))
             self._lava_timer.start()
             self._lava_timer.join()
 
@@ -92,21 +119,26 @@ def host_id(games, channel_id):
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    bot.send_message(message.chat.id,\
-                     'Hi! I`m \'The floor is lava\' game. Let`s play!\n'
-                     '/host - create room\n'
-                     '/join - join room\n'
-                     '/play - start the game!\n'
-                     '/help - if you want to change game options, call help!\n'
-                     'Remember, only host of the room can change the game options and start the game!\n')
+    bot.send_message(message.chat.id,
+                     'Hi! ' + smile + '\n'
+                     'I\'m \"The floor is lava\" game. Let\'s play!' + fire + '\n\n'
+                     '/host - create room ' + new + '\n'
+                     '/join - join room ' + arrow + '\n'
+                     '/play - start the game! ' + check + '\n'
+                     '/help - if you want to change game options, call help! ' + sos + '\n\n'
+                     'Remember!' + point + '\n'
+                     'Only host of the room can change the game options and start the game! Good luck.' + heart)
 
 
 @bot.message_handler(commands=['help'])
 def handle_start(message):
-    bot.send_message(message.chat.id,\
-                     '/time - maximum time of waves (standard - 30)\n'
-                     '/safe - safe time before lava is coming (standard - 3)\n'
-                     '/repeat - repeats of coming lava waves (standard - 1)\n')
+    bot.send_message(message.chat.id,
+                     'Here is some commands for changing game options.\n\n'
+                     '/time - maximum time of waves ' + watch + ' (std. - 30, max. - 300)\n'
+                     '/safe - safe time before lava is coming ' + hourglass + ' (std. - 3, max. - 10)\n'
+                     '/burn - burning lava time ' + fire + ' (std. - 3, max. - 10)\n'
+                     '/repeat - repeats of coming lava waves ' + recycling + ' (std. - 1, max. - 10)\n\n'
+                     'Remember that you can\'t stop the game while lava is coming, change options carefully!')
 
 
 @bot.message_handler(commands=['host'])
@@ -156,7 +188,20 @@ def handle_start(message):
             games[str(message.chat.id)].safe_time(int(s_time))
         else:
             bot.send_message(message.chat.id, 'Only host can set safe time!')
-    except ValueError:
+    except:
+        bot.send_message(message.chat.id, 'Oh, something went wrong :c\n'
+                                          'Don`t worry and try again!')
+
+
+@bot.message_handler(commands=['burn'])
+def handle_start(message):
+    try:
+        b_time = str(message.text).split()[-1]
+        if is_host(message.chat.id):
+            games[str(message.chat.id)].burn_time(int(b_time))
+        else:
+            bot.send_message(message.chat.id, 'Only host can set burning time!')
+    except:
         bot.send_message(message.chat.id, 'Oh, something went wrong :c\n'
                                           'Don`t worry and try again!')
 
