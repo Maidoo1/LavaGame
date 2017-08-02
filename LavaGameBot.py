@@ -9,9 +9,9 @@ bot = telebot.TeleBot(tb_token)
 
 class LavaGame:
     def __init__(self, player_id, channel_id):
-        self.host_id = player_id
+        self.players = []
+        self.player_id = player_id
         self.channel_id = channel_id
-        self.started = False
         self.repeat = 1
         self.safe_time = 3
         self.max_time = 30
@@ -19,26 +19,39 @@ class LavaGame:
         self._wave_timer = 0
         self._random_num = 0
 
+    def add_player(self, player_id):
+        # self.players.update({0: player_id})
+        # self.players[0] = self.player_id
+        self.players.append(player_id)
+        print(self.players)
+        print(type(self))
+
+    def send_messages(self, message):
+        # for player in list(self.players.values()):
+        #     bot.send_message(player, message)
+        [bot.send_message(player, message) for player in self.players]
+
     def start_game(self):
+        print(self.players)
         for i in range(self.repeat):
             self.wave_timer()
 
     def lava_coming(self):
-        bot.send_message(self.host_id, 'Hide! Lava is coming after:')
+        self.send_messages('Hide! Lava is coming after:')
 
         for sec in range(self.safe_time, 0, -1):
-            self._lava_timer = threading.Timer(1, bot.send_message(self.host_id, str(sec)))
+            self._lava_timer = threading.Timer(1, self.send_messages(str(sec)))
             self._lava_timer.start()
             self._lava_timer.join()
 
-        bot.send_message(self.host_id, 'The floor is lava!')
+        self.send_messages('The floor is lava!')
 
         for sec in range(1, 4, 1):
             self._lava_timer = threading.Timer(1, lambda x: x)
             self._lava_timer.start()
             self._lava_timer.join()
 
-        bot.send_message(self.host_id, 'The floor is safe now')
+        self.send_messages('The floor is safe now')
 
     def wave_timer(self):
         for sec in range(self.max_time, 0, -1):
@@ -46,7 +59,7 @@ class LavaGame:
             if self._random_num == sec:
                 return self.lava_coming()
             else:
-                self._wave_timer = threading.Timer(1, bot.send_message(self.host_id, 'Waiting for lava . . .'))
+                self._wave_timer = threading.Timer(1, self.send_messages('Waiting for lava . . .'))
                 self._wave_timer.start()
                 self._wave_timer.join()
         else:
@@ -58,6 +71,12 @@ games = {}  # Словарь, в котором ключ - id хоста, а з�
 
 def is_host(player_id, room=games):
     return True if str(player_id) in games.keys() else False
+
+
+def host_id(games, channel_id):
+    for host_id, game in games.items():
+        if game.channel_id == channel_id:
+            return host_id
 
 
 @bot.message_handler(commands=['start'])
@@ -83,15 +102,18 @@ def handle_start(message):
 def handle_start(message):
     channel_id = str(message.text).split()[-1]
     games[str(message.chat.id)] = LavaGame(message.chat.id, channel_id)
+    games[str(message.chat.id)].add_player(message.chat.id)
+    print(games[str(message.chat.id)])
     bot.send_message(message.chat.id, 'Game has been created with id: {}'.format(channel_id))
 
 
-# @bot.message_handler(commands=['join'])
-# def handle_start(message):
-#     channel_id = str(message.text).split()[-1]
-#     if channel_id in games.values():
-#         LavaGame(message.chat.id, channel_id)
-#     bot.send_message(message.chat.id, 'You have been joined in room: {}'.format(channel_id))
+@bot.message_handler(commands=['join'])
+def handle_start(message):
+    channel_id = str(message.text).split()[-1]
+    games[host_id(games, channel_id)].player_id = message.chat.id
+    games[host_id(games, channel_id)].add_player(message.chat.id)
+    print(games[host_id(games, channel_id)])
+    bot.send_message(message.chat.id, 'You have been joined in room: {}'.format(channel_id))
 
 
 @bot.message_handler(commands=['time'])
@@ -122,6 +144,7 @@ def handle_start(message):
         bot.send_message(message.chat.id, 'Game will be repeated {} times'.format(iter))
     else:
         bot.send_message(message.chat.id, 'Only host can stop the game!')
+
 
 
 @bot.message_handler(commands=['play'])
