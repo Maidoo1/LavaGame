@@ -1,4 +1,5 @@
 import telebot
+from telebot import types
 from threading import Timer
 from random import randint
 
@@ -36,7 +37,6 @@ class LavaGame:
     def add_player(self, player_id):
         self.players.append(player_id)
         print(self.players)
-        print(type(self))
 
     def send_messages(self, message):
         [bot.send_message(player, message) for player in self.players]
@@ -114,6 +114,9 @@ def host_id(channel_id):
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*[types.KeyboardButton(name) for name in ['/host', '/join']])
+
     bot.send_message(message.chat.id,
                      'Hi! ' + smile + '\n'
                      'I\'m \"The floor is lava\" game. Let\'s play!' + fire + '\n\n'
@@ -122,7 +125,8 @@ def handle_start(message):
                      '/play - start the game! ' + check + '\n'
                      '/help - if you want to change game options, call help! ' + sos + '\n\n'
                      'Remember!' + point + '\n'
-                     'Only host of the room can change the game options and start the game! Good luck.' + heart)
+                     'Only host of the room can change the game options and start the game! Good luck.' + heart,
+                     reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['help'])
@@ -142,13 +146,22 @@ def handle_start(message):
     bot.register_next_step_handler(request, host_command)
 
 
+def host_keyboard(message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*[types.KeyboardButton(name) for name in ['/play']])
+    keyboard.add(*[types.KeyboardButton(name) for name in ['/wave', '/safe']])
+    keyboard.add(*[types.KeyboardButton(name) for name in ['/burn', '/repeat', '/help']])
+    bot.send_message(message.chat.id, 'Choose the options', reply_markup=keyboard)
+
+
 def host_command(message):
     try:
         channel_id = str(message.text)
         games[str(message.chat.id)] = LavaGame(message.chat.id, channel_id)
         games[str(message.chat.id)].add_player(message.chat.id)
         print(games[str(message.chat.id)])
-        bot.send_message(message.chat.id, 'Game has been created with id: {}'.format(channel_id))
+        created = bot.send_message(message.chat.id, 'Game has been created with id: {}'.format(channel_id))
+        host_keyboard(message)
     except:
         bot.send_message(message.chat.id, 'Oh, something went wrong :c\n'
                                           'Don\'t worry and try again!')
