@@ -138,8 +138,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=['host'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send the room id')
+    bot.register_next_step_handler(request, host_command)
+
+
+def host_command(message):
     try:
-        channel_id = str(message.text).split()[-1]
+        channel_id = str(message.text)
         games[str(message.chat.id)] = LavaGame(message.chat.id, channel_id)
         games[str(message.chat.id)].add_player(message.chat.id)
         print(games[str(message.chat.id)])
@@ -149,20 +154,15 @@ def handle_start(message):
                                           'Don\'t worry and try again!')
 
 
-@bot.message_handler(commands=['test'])
-def handle_start(message):
-    msg = bot.send_message(message.chat.id, 'Send the text')
-    bot.register_next_step_handler(msg, s)
-
-
-def s(message):
-    bot.send_message(message.chat.id, message.text)
-
-
 @bot.message_handler(commands=['join'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send the room id')
+    bot.register_next_step_handler(request, join_command)
+
+
+def join_command(message):
     try:
-        channel_id = str(message.text).split()[-1]
+        channel_id = str(message.text)
         games[host_id(channel_id)].player_id = message.chat.id
         games[host_id(channel_id)].add_player(message.chat.id)
         print(games[host_id(channel_id)])
@@ -174,8 +174,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=['wave'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send maximum time of waves')
+    bot.register_next_step_handler(request, wave_command)
+
+
+def wave_command(message):
     try:
-        w_time = str(message.text).split()[-1]
+        w_time = str(message.text)
         if is_host(message.chat.id):
             games[str(message.chat.id)].wave_time(int(w_time))
         else:
@@ -187,8 +192,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=['safe'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send safe time before lava is coming')
+    bot.register_next_step_handler(request, safe_command)
+
+
+def safe_command(message):
     try:
-        s_time = str(message.text).split()[-1]
+        s_time = str(message.text)
         if is_host(message.chat.id):
             games[str(message.chat.id)].safe_time(int(s_time))
         else:
@@ -200,8 +210,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=['burn'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send time for burning lava')
+    bot.register_next_step_handler(request, burn_command)
+
+
+def burn_command(message):
     try:
-        b_time = str(message.text).split()[-1]
+        b_time = str(message.text)
         if is_host(message.chat.id):
             games[str(message.chat.id)].burn_time(int(b_time))
         else:
@@ -213,8 +228,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=['repeat'])
 def handle_start(message):
+    request = bot.send_message(message.chat.id, 'Please, send the number of repeats')
+    bot.register_next_step_handler(request, repeat_command)
+
+
+def repeat_command(message):
     try:
-        r_times = str(message.text).split()[-1]
+        r_times = str(message.text)
         if is_host(message.chat.id):
             games[str(message.chat.id)].repeats(int(r_times))
         else:
